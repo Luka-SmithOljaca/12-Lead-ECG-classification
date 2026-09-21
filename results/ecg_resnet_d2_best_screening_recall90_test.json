@@ -1,0 +1,388 @@
+{
+  "checkpoint": "Models\\ecg_resnet_d2_best.pt",
+  "checkpoint_sha256": "bc4b2415e6acbb52d8692ba3dea64f80a92c87fefad0abc9b3a5dff9444deffc",
+  "model": "ECGResNet",
+  "last_block_dilation": 2,
+  "folds": {
+    "validation": 9,
+    "test": 10
+  },
+  "threshold_selection": {
+    "abnormal_labels": "highest precision with validation recall at least target, thresholds 0.00 to 1.00 in steps of 0.01",
+    "normal_label": "validation F1, thresholds 0.05 to 0.95 in steps of 0.05",
+    "target_recall": 0.9
+  },
+  "validation_loss": 0.2732267979220191,
+  "validation": {
+    "samples": 2183,
+    "macro_auroc": 0.9323290149406376,
+    "macro_average_precision": 0.8234415177769765,
+    "macro_f1": 0.7083144353865325,
+    "per_class": {
+      "NORM": {
+        "positives": 955,
+        "predicted_positives": 1003,
+        "false_positives": 156,
+        "false_negatives": 108,
+        "prevalence": 0.4374713599681854,
+        "auroc": 0.9498298855671333,
+        "average_precision": 0.9322359543300555,
+        "threshold": 0.55,
+        "precision": 0.8444666001994018,
+        "recall": 0.8869109947643979,
+        "f1": 0.8651685393258427
+      },
+      "MI": {
+        "positives": 540,
+        "predicted_positives": 825,
+        "false_positives": 335,
+        "false_negatives": 50,
+        "prevalence": 0.2473660111427307,
+        "auroc": 0.9324462929149478,
+        "average_precision": 0.836496658480157,
+        "threshold": 0.09,
+        "precision": 0.593939393939394,
+        "recall": 0.9074074074074074,
+        "f1": 0.717948717948718
+      },
+      "STTC": {
+        "positives": 528,
+        "predicted_positives": 765,
+        "false_positives": 288,
+        "false_negatives": 51,
+        "prevalence": 0.2418689876794815,
+        "auroc": 0.9334260276480819,
+        "average_precision": 0.8076957819017577,
+        "threshold": 0.24,
+        "precision": 0.6235294117647059,
+        "recall": 0.9034090909090909,
+        "f1": 0.7378190255220418
+      },
+      "CD": {
+        "positives": 495,
+        "predicted_positives": 764,
+        "false_positives": 317,
+        "false_negatives": 48,
+        "prevalence": 0.2267521768808365,
+        "auroc": 0.9312688496337785,
+        "average_precision": 0.8528770985263391,
+        "threshold": 0.2,
+        "precision": 0.5850785340314136,
+        "recall": 0.9030303030303031,
+        "f1": 0.710087370929309
+      },
+      "HYP": {
+        "positives": 268,
+        "predicted_positives": 680,
+        "false_positives": 438,
+        "false_negatives": 26,
+        "prevalence": 0.12276683747768402,
+        "auroc": 0.9146740189392463,
+        "average_precision": 0.6879020956465736,
+        "threshold": 0.05,
+        "precision": 0.3558823529411765,
+        "recall": 0.9029850746268657,
+        "f1": 0.510548523206751
+      }
+    }
+  },
+  "test_loss": 0.2823322603006163,
+  "test": {
+    "samples": 2198,
+    "macro_auroc": 0.9253154791755224,
+    "macro_average_precision": 0.8130780317418811,
+    "macro_f1": 0.6984890744481518,
+    "per_class": {
+      "NORM": {
+        "positives": 963,
+        "predicted_positives": 1034,
+        "false_positives": 175,
+        "false_negatives": 104,
+        "prevalence": 0.4381255805492401,
+        "auroc": 0.9476046934974628,
+        "average_precision": 0.9245297005675543,
+        "threshold": 0.55,
+        "precision": 0.8307543520309478,
+        "recall": 0.8920041536863966,
+        "f1": 0.8602904356534802
+      },
+      "MI": {
+        "positives": 550,
+        "predicted_positives": 829,
+        "false_positives": 334,
+        "false_negatives": 55,
+        "prevalence": 0.2502274811267853,
+        "auroc": 0.9266229037952338,
+        "average_precision": 0.8302095210277273,
+        "threshold": 0.09,
+        "precision": 0.5971049457177322,
+        "recall": 0.9,
+        "f1": 0.7179115300942712
+      },
+      "STTC": {
+        "positives": 521,
+        "predicted_positives": 712,
+        "false_positives": 255,
+        "false_negatives": 64,
+        "prevalence": 0.2370336651802063,
+        "auroc": 0.9335654451040784,
+        "average_precision": 0.8226682828158343,
+        "threshold": 0.24,
+        "precision": 0.6418539325842697,
+        "recall": 0.8771593090211133,
+        "f1": 0.7412814274128142
+      },
+      "CD": {
+        "positives": 496,
+        "predicted_positives": 772,
+        "false_positives": 337,
+        "false_negatives": 61,
+        "prevalence": 0.22565968334674835,
+        "auroc": 0.9146556707478868,
+        "average_precision": 0.8293284711389806,
+        "threshold": 0.2,
+        "precision": 0.5634715025906736,
+        "recall": 0.8770161290322581,
+        "f1": 0.6861198738170347
+      },
+      "HYP": {
+        "positives": 262,
+        "predicted_positives": 650,
+        "false_positives": 428,
+        "false_negatives": 40,
+        "prevalence": 0.11919926851987839,
+        "auroc": 0.9041286827329506,
+        "average_precision": 0.6586541831593091,
+        "threshold": 0.05,
+        "precision": 0.3415384615384615,
+        "recall": 0.8473282442748091,
+        "f1": 0.4868421052631579
+      }
+    }
+  },
+  "f1_threshold_baseline_on_same_checkpoint": {
+    "samples": 2198,
+    "macro_auroc": 0.9253154791755224,
+    "macro_average_precision": 0.8130780317418811,
+    "macro_f1": 0.7387695397352971,
+    "per_class": {
+      "NORM": {
+        "positives": 963,
+        "predicted_positives": 1034,
+        "false_positives": 175,
+        "false_negatives": 104,
+        "prevalence": 0.4381255805492401,
+        "auroc": 0.9476046934974628,
+        "average_precision": 0.9245297005675543,
+        "threshold": 0.55,
+        "precision": 0.8307543520309478,
+        "recall": 0.8920041536863966,
+        "f1": 0.8602904356534802
+      },
+      "MI": {
+        "positives": 550,
+        "predicted_positives": 544,
+        "false_positives": 142,
+        "false_negatives": 148,
+        "prevalence": 0.2502274811267853,
+        "auroc": 0.9266229037952338,
+        "average_precision": 0.8302095210277273,
+        "threshold": 0.25,
+        "precision": 0.7389705882352942,
+        "recall": 0.730909090909091,
+        "f1": 0.7349177330895795
+      },
+      "STTC": {
+        "positives": 521,
+        "predicted_positives": 619,
+        "false_positives": 187,
+        "false_negatives": 89,
+        "prevalence": 0.2370336651802063,
+        "auroc": 0.9335654451040784,
+        "average_precision": 0.8226682828158343,
+        "threshold": 0.35000000000000003,
+        "precision": 0.6978998384491115,
+        "recall": 0.8291746641074856,
+        "f1": 0.7578947368421053
+      },
+      "CD": {
+        "positives": 496,
+        "predicted_positives": 482,
+        "false_positives": 115,
+        "false_negatives": 129,
+        "prevalence": 0.22565968334674835,
+        "auroc": 0.9146556707478868,
+        "average_precision": 0.8293284711389806,
+        "threshold": 0.6000000000000001,
+        "precision": 0.7614107883817427,
+        "recall": 0.7399193548387096,
+        "f1": 0.7505112474437627
+      },
+      "HYP": {
+        "positives": 262,
+        "predicted_positives": 209,
+        "false_positives": 70,
+        "false_negatives": 123,
+        "prevalence": 0.11919926851987839,
+        "auroc": 0.9041286827329506,
+        "average_precision": 0.6586541831593091,
+        "threshold": 0.3,
+        "precision": 0.6650717703349283,
+        "recall": 0.5305343511450382,
+        "f1": 0.5902335456475584
+      }
+    }
+  },
+  "error_examples": {
+    "NORM": {
+      "false_positives": [
+        {
+          "ecg_id": 7895,
+          "probability": 0.988743782043457
+        },
+        {
+          "ecg_id": 10828,
+          "probability": 0.9836974740028381
+        },
+        {
+          "ecg_id": 1745,
+          "probability": 0.9734155535697937
+        }
+      ],
+      "false_negatives": [
+        {
+          "ecg_id": 12033,
+          "probability": 0.03139403462409973
+        },
+        {
+          "ecg_id": 1220,
+          "probability": 0.03422755002975464
+        },
+        {
+          "ecg_id": 7950,
+          "probability": 0.037398215383291245
+        }
+      ]
+    },
+    "MI": {
+      "false_positives": [
+        {
+          "ecg_id": 7783,
+          "probability": 0.9317513704299927
+        },
+        {
+          "ecg_id": 17920,
+          "probability": 0.9281495213508606
+        },
+        {
+          "ecg_id": 2409,
+          "probability": 0.9092848300933838
+        }
+      ],
+      "false_negatives": [
+        {
+          "ecg_id": 7895,
+          "probability": 0.0018756784265860915
+        },
+        {
+          "ecg_id": 10828,
+          "probability": 0.005940624047070742
+        },
+        {
+          "ecg_id": 1447,
+          "probability": 0.006095418240875006
+        }
+      ]
+    },
+    "STTC": {
+      "false_positives": [
+        {
+          "ecg_id": 9458,
+          "probability": 0.9772807955741882
+        },
+        {
+          "ecg_id": 8178,
+          "probability": 0.976592481136322
+        },
+        {
+          "ecg_id": 7950,
+          "probability": 0.9618735313415527
+        }
+      ],
+      "false_negatives": [
+        {
+          "ecg_id": 17648,
+          "probability": 0.007274610456079245
+        },
+        {
+          "ecg_id": 7919,
+          "probability": 0.008687800727784634
+        },
+        {
+          "ecg_id": 11132,
+          "probability": 0.012911371886730194
+        }
+      ]
+    },
+    "CD": {
+      "false_positives": [
+        {
+          "ecg_id": 11371,
+          "probability": 0.9936702251434326
+        },
+        {
+          "ecg_id": 19268,
+          "probability": 0.9930376410484314
+        },
+        {
+          "ecg_id": 15857,
+          "probability": 0.9928287863731384
+        }
+      ],
+      "false_negatives": [
+        {
+          "ecg_id": 19461,
+          "probability": 0.0010682319989427924
+        },
+        {
+          "ecg_id": 378,
+          "probability": 0.002381225349381566
+        },
+        {
+          "ecg_id": 18974,
+          "probability": 0.0032768892124295235
+        }
+      ]
+    },
+    "HYP": {
+      "false_positives": [
+        {
+          "ecg_id": 20224,
+          "probability": 0.9661155343055725
+        },
+        {
+          "ecg_id": 16920,
+          "probability": 0.9027554988861084
+        },
+        {
+          "ecg_id": 17316,
+          "probability": 0.7414658665657043
+        }
+      ],
+      "false_negatives": [
+        {
+          "ecg_id": 4167,
+          "probability": 0.0012642815709114075
+        },
+        {
+          "ecg_id": 1745,
+          "probability": 0.0024369852617383003
+        },
+        {
+          "ecg_id": 11872,
+          "probability": 0.004633322823792696
+        }
+      ]
+    }
+  }
+}

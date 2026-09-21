@@ -1,5 +1,5 @@
 .venv/
 __pycache__/
-.idea/
-PROJECT_CONTEXT.md
 Data/
+Models/
+.idea/
