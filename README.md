@@ -44,19 +44,18 @@ positive weight = number of negative examples / number of positive examples
 
 The weights are printed at the start of training and written to the result file. Training loss is weighted, while validation loss remains ordinary binary cross-entropy so that it is easier to compare between runs.
 
-The weighted run writes:
+Use `--loss bce` to train the unweighted baseline instead. Output filenames include the loss and seed, so runs do not overwrite each other. For example, the default run writes:
 
 ```text
-Models/ecg_resnet_d2_weighted_bce_best.pt
-results/ecg_resnet_d2_weighted_bce_screening_validation.json
+Models/ecg_resnet_d2_weighted_bce_seed42_best.pt
+results/ecg_resnet_d2_weighted_bce_seed42_screening_validation.json
 ```
-
-The weighted filenames are separate from the original checkpoint and results, so the unweighted baseline is not overwritten.
 
 Useful training options are:
 
 ```powershell
 uv run python main.py --epochs 40 --seed 123
+uv run python main.py --loss bce
 uv run python main.py --data-dir C:/path/to/ptb-xl
 ```
 
@@ -64,7 +63,7 @@ Run `uv run python main.py --help` to see every option.
 
 ## Evaluation
 
-Evaluate the weighted checkpoint with:
+Evaluation runs on a GPU if one is available and on the CPU otherwise. Evaluate the weighted checkpoint with:
 
 ```powershell
 uv run python test.py --checkpoint Models/ecg_resnet_d2_weighted_bce_best.pt
@@ -89,9 +88,11 @@ The evaluator prints both policies and saves the complete report, checkpoint has
 results/ecg_resnet_d2_weighted_bce_best_screening_recall90_test.json
 ```
 
+The results file is named after the checkpoint, so evaluating another checkpoint writes a separate file.
+
 ## Current results
 
-The following results are from held-out fold 10. All thresholds were selected on validation fold 9.
+The following results are from held-out fold 10, for a single training run of each loss. All thresholds were selected on validation fold 9.
 
 | Model and threshold policy | Macro AUROC | Macro AP | Macro F1 |
 | --- | ---: | ---: | ---: |
@@ -100,7 +101,7 @@ The following results are from held-out fold 10. All thresholds were selected on
 | Original BCE, 90% recall screening | 0.9253 | 0.8131 | 0.6985 |
 | Weighted BCE, 90% recall screening | **0.9271** | **0.8179** | **0.7003** |
 
-Weighted BCE gives a small overall improvement. Its clearest gain is on the least common class, `HYP`: average precision increases from 0.659 to 0.676. It also improves the F1-threshold result from 0.590 to 0.599. `STTC` changes very little, so the weighted loss should be treated as a useful improvement rather than a complete solution to the imbalance.
+Weighted BCE gives a small overall improvement. Its clearest gain is on the least common class, `HYP`: average precision increases from 0.659 to 0.676. It also improves the F1-threshold result from 0.590 to 0.599. `STTC` changes very little. These differences are small and come from one run each, so they could partly be seed-to-seed variation; see the next section for how to check this.
 
 With weighted BCE and F1 thresholds, the per-class test results are:
 
@@ -114,11 +115,26 @@ With weighted BCE and F1 thresholds, the per-class test results are:
 
 AUROC and average precision measure how well the model ranks examples across all thresholds. Precision, recall, and F1 depend on the selected threshold. This is why AUROC and average precision are identical for the two threshold policies on the same checkpoint.
 
+## Checking results across seeds
+
+To check whether the difference between the losses is larger than the variation between runs, train and evaluate both losses with a few seeds:
+
+```powershell
+foreach ($loss in "weighted_bce", "bce") {
+    foreach ($seed in 0..4) {
+        uv run python main.py --loss $loss --seed $seed
+        uv run python test.py --checkpoint "Models/ecg_resnet_d2_${loss}_seed${seed}_best.pt"
+    }
+}
+```
+
+Then compare the mean and standard deviation of the test metrics in the `results/*_seed*_best_screening_recall90_test.json` files for each loss.
+
 ## Project files
 
-- `main.py` contains the dataset class, ResNet, training loop, weighted loss, early stopping, and validation reporting.
+- `main.py` contains the dataset class, ResNet, training loop, weighted loss, early stopping, prediction helper, and validation reporting.
 - `test.py` evaluates a checkpoint on validation and test folds and writes the final report.
 - `metrics.py` contains metric calculation and threshold selection.
-- `EDA.py` loads PTB-XL metadata and maps diagnostic statements to the five superclasses.
-- `Models/` contains trained checkpoints and is ignored by Git.
+- `data.py` loads PTB-XL metadata and maps diagnostic statements to the five superclasses.
+- `Models/` contains trained checkpoints. Only `ecg_resnet_d2_weighted_bce_best.pt`, the checkpoint reported above, is committed; the others are ignored by Git.
 - `results/` contains the smaller JSON experiment reports, which can be committed.

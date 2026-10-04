@@ -7,27 +7,10 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from torch import nn
-from torch.utils.data import DataLoader
 
-from EDA import get_data_dir, load_metadata
-from main import ECGResNet, PTBXLDataset
+from data import get_data_dir, load_metadata
+from main import ECGResNet, PTBXLDataset, predict
 from metrics import evaluate, print_metrics, select_f1_thresholds, select_screening_thresholds
-
-
-def predict(model, dataset, device):
-    loader = DataLoader(dataset, batch_size=32, shuffle=False)
-    loss_fn = nn.BCEWithLogitsLoss()
-    loss_sum = 0.0
-    targets, probabilities = [], []
-    model.eval()
-    with torch.no_grad():
-        for x, y in loader:
-            logits = model(x.to(device))
-            loss_sum += loss_fn(logits, y.to(device)).item() * len(x)
-            targets.append(y.numpy())
-            probabilities.append(torch.sigmoid(logits).cpu().numpy())
-    return np.concatenate(targets), np.concatenate(probabilities), loss_sum / len(dataset)
 
 
 def error_examples(dataset, targets, probabilities, thresholds):
@@ -51,7 +34,7 @@ def error_examples(dataset, targets, probabilities, thresholds):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-dir", type=Path)
-    parser.add_argument("--checkpoint", type=Path, default=Path(__file__).resolve().parent / "Models" / "ecg_resnet_d2_best.pt")
+    parser.add_argument("--checkpoint", type=Path, default=Path(__file__).resolve().parent / "Models" / "ecg_resnet_d2_weighted_bce_best.pt")
     parser.add_argument("--target-recall", type=float, default=0.90,
                         help="Minimum validation recall for MI, STTC, CD and HYP (default: 0.90)")
     args = parser.parse_args()
@@ -63,7 +46,7 @@ def main():
     assert (val_dataset.metadata["strat_fold"] == 9).all()
     assert (test_dataset.metadata["strat_fold"] == 10).all()
 
-    device = torch.device("cuda")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = ECGResNet(last_block_dilation=2).to(device)
     model.load_state_dict(torch.load(args.checkpoint, map_location=device, weights_only=True))
 

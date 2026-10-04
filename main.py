@@ -8,7 +8,7 @@ import numpy as np
 from torch import nn
 from torch.utils.data import DataLoader
 from metrics import evaluate, print_metrics, select_screening_thresholds
-from EDA import LABELS, get_data_dir, load_metadata
+from data import LABELS, get_data_dir, load_metadata
 
 class PTBXLDataset(torch.utils.data.Dataset):
     LABELS = LABELS
@@ -33,29 +33,6 @@ class PTBXLDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         return self.signals[index], self.targets[index]
-
-class ECGCNN(nn.Module):
-    def __init__(self):
-        super().__init__()
-
-        self.features = nn.Sequential(
-            nn.Conv1d(in_channels=12, out_channels=32, kernel_size=7, padding=3),
-            nn.ReLU(),
-            nn.MaxPool1d(kernel_size=2),
-
-            nn.Conv1d(in_channels=32, out_channels=64, kernel_size=5, padding=2),
-            nn.ReLU(),
-            nn.MaxPool1d(kernel_size=2),
-
-            nn.AdaptiveAvgPool1d(output_size=1),
-        )
-
-        self.classifier = nn.Linear(in_features=64, out_features=5)
-
-    def forward(self, x):
-        x = self.features(x)   # (batch, 64, 1)
-        x = x.squeeze(-1)      # (batch, 64)
-        return self.classifier(x)  # (batch, 5)
 
 class ResidualBlock(nn.Module):
     def __init__(self, in_channels, out_channels, dilation=1):
@@ -119,11 +96,28 @@ class ECGResNet(nn.Module):
         x = x.squeeze(-1)
         return self.classifier(x)
 
+def predict(model, dataset, device):
+    """Return targets, probabilities and unweighted BCE loss for a dataset."""
+    loader = DataLoader(dataset, batch_size=32, shuffle=False)
+    loss_fn = nn.BCEWithLogitsLoss()
+    loss_sum = 0.0
+    targets, probabilities = [], []
+    model.eval()
+    with torch.no_grad():
+        for x, y in loader:
+            logits = model(x.to(device))
+            loss_sum += loss_fn(logits, y.to(device)).item() * len(x)
+            targets.append(y.numpy())
+            probabilities.append(torch.sigmoid(logits).cpu().numpy())
+    return np.concatenate(targets), np.concatenate(probabilities), loss_sum / len(dataset)
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-dir", type=Path, help="PTB-XL directory; defaults to Data/... or PTBXL_DATA_DIR")
     parser.add_argument("--epochs", type=int, default=60)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--loss", choices=["weighted_bce", "bce"], default="weighted_bce",
+                        help="Training loss; bce is the unweighted baseline")
     parser.add_argument("--target-recall", type=float, default=0.90,
                         help="Minimum validation recall for MI, STTC, CD and HYP (default: 0.90)")
     args = parser.parse_args()
@@ -155,14 +149,18 @@ def main():
             f"Cannot calculate positive class weights; no training examples for: "
             f"{', '.join(missing_labels)}"
         )
-    pos_weight = (negative_counts / positive_counts).to(device)
-    train_loss_fn = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+    if args.loss == "weighted_bce":
+        pos_weight = (negative_counts / positive_counts).to(device)
+        train_loss_fn = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+        class_weights = {
+            label: float(weight)
+            for label, weight in zip(PTBXLDataset.LABELS, pos_weight.cpu())
+        }
+        print(f"Positive class weights: {class_weights}")
+    else:
+        train_loss_fn = nn.BCEWithLogitsLoss()
+        class_weights = None
     evaluation_loss_fn = nn.BCEWithLogitsLoss()
-    class_weights = {
-        label: float(weight)
-        for label, weight in zip(PTBXLDataset.LABELS, pos_weight.cpu())
-    }
-    print(f"Positive class weights: {class_weights}")
     learning_rate = 1e-3
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     patience = 8
@@ -171,7 +169,8 @@ def main():
     results_dir = project_dir / "results"
     models_dir.mkdir(exist_ok=True)
     results_dir.mkdir(exist_ok=True)
-    checkpoint = models_dir / f"ecg_resnet_d{last_block_dilation}_weighted_bce_best.pt"
+    run_name = f"ecg_resnet_d{last_block_dilation}_{args.loss}_seed{args.seed}"
+    checkpoint = models_dir / f"{run_name}_best.pt"
     best_auroc = float("-inf")
     best_epoch = 0
     epochs_without_improvement = 0
@@ -245,15 +244,7 @@ def main():
 
     # Re-evaluate the selected checkpoint, since the final epoch may not be the best.
     model.load_state_dict(torch.load(checkpoint, map_location=device, weights_only=True))
-    model.eval()
-    all_targets, all_probabilities = [], []
-    with torch.no_grad():
-        for x, y in val_loader:
-            logits = model(x.to(device))
-            all_targets.append(y.numpy())
-            all_probabilities.append(torch.sigmoid(logits).cpu().numpy())
-    targets = np.concatenate(all_targets)
-    probabilities = np.concatenate(all_probabilities)
+    targets, probabilities, _ = predict(model, val_dataset, device)
     thresholds = select_screening_thresholds(
         targets, probabilities, PTBXLDataset.LABELS, args.target_recall
     )
@@ -261,7 +252,7 @@ def main():
     record = {
         "model": "ECGResNet", "last_block_dilation": last_block_dilation,
         "seed": args.seed, "learning_rate": learning_rate, "batch_size": 32,
-        "loss": "weighted_BCEWithLogitsLoss",
+        "loss": args.loss,
         "positive_class_weights": class_weights,
         "max_epochs": args.epochs, "patience": patience,
         "best_epoch": best_epoch, "checkpoint": str(checkpoint.relative_to(project_dir)),
@@ -273,7 +264,7 @@ def main():
         },
         "validation": validation, "history": history,
     }
-    result_path = results_dir / f"ecg_resnet_d{last_block_dilation}_weighted_bce_screening_validation.json"
+    result_path = results_dir / f"{run_name}_screening_validation.json"
     result_path.write_text(json.dumps(record, indent=2))
     print(f"Best epoch: {best_epoch}")
     print_metrics(validation)

@@ -3,3 +3,8 @@ __pycache__/
 Data/
 .idea/
 PROJECT_CONTEXT.md
+
+# Checkpoints are ignored except the one reported in the README,
+# so the evaluator can be run without retraining.
+Models/*
+!Models/ecg_resnet_d2_weighted_bce_best.pt
